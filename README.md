@@ -153,7 +153,7 @@ Samba_Restaurant_SQL_Analytics_Portfolio_Project/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/<yourusername>/Samba_Restaurant_SQL_Analytics_Portfolio_Project.git
+   git clone https://github.com/founa67/Samba_Restaurant_SQL_Analytics_Portfolio_Project.git
    ```
 2. Open the Snowflake SQL console or VS Code with Snowflake connector.  
 3. Execute queries from `02_Data_Analytics_Phase/SQL_Solutions.md`.  
