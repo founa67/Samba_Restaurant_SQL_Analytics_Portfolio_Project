@@ -173,8 +173,8 @@ Data used is **synthetic / anonymized** for educational and portfolio demonstrat
 
 **[Your Full Name]**  
 Snowflake SQL | BI Analytics | Data Engineering | Kenya Market Analytics  
-📧 [your.email@example.com]  
-🌐 [LinkedIn / Portfolio Website]
+📧 [frankouna96@gmail.com]  
+🌐 [[LinkedIn / Portfolio Website](https://www.linkedin.com/in/frankouna/)]
 
 ---
 
