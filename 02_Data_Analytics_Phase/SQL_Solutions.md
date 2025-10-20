@@ -38,14 +38,14 @@ ORDER BY YEAR(d.date);
 ```sql
 -- Top 10 products by cumulative revenue
 SELECT
-  p.product_id,
+  p.PRODUCT_KEY,
   p.product_name,
   p.category,
-  SUM(f.total_amount_euros) AS revenue_euros,
-  SUM(f.quantity) AS total_units_sold
-FROM PRODUCTION.FACT_SALES f
-JOIN PRODUCTION.DIM_PRODUCT p ON f.product_id = p.product_id
-GROUP BY p.product_id, p.product_name, p.category
+  SUM(f.revenue) AS revenue_euros,
+  SUM(f.volume_sold) AS total_units_sold
+FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT p ON f.PRODUCT_KEY = p.PRODUCT_KEY
+GROUP BY p.PRODUCT_KEY, p.product_name, p.category
 ORDER BY revenue_euros DESC
 LIMIT 10;
 ```
