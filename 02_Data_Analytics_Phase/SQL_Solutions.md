@@ -87,14 +87,14 @@ ORDER BY avg_ticket_euros DESC;
 ```sql
 -- Replace :branch_id with the branch ID you wish to inspect
 SELECT
-  f.sale_date,
-  SUM(f.total_amount_euros) AS daily_revenue_euros,
-  SUM(f.quantity) AS daily_units_sold
-FROM PRODUCTION.FACT_SALES f
-WHERE f.branch_id = :branch_id
-  AND f.sale_date BETWEEN '2022-01-01' AND '2022-01-31'
-GROUP BY f.sale_date
-ORDER BY f.sale_date;
+  DATE(f.sale_ts) AS sale_date,
+  SUM(f.revenue) AS daily_revenue_euros,
+  CAST(SUM(f.volume_sold) as decimal(10,0)) AS daily_units_sold
+FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+WHERE f.branch_key = 18
+  AND DATE(f.sale_ts) BETWEEN '2022-01-01' AND '2022-01-31'
+GROUP BY DATE(f.sale_ts)
+ORDER BY sale_date;
 ```
 
 **Expected output interpretation:** Time series of daily revenue and units sold for a specific branch and month — useful for operational analysis and anomaly detection.
