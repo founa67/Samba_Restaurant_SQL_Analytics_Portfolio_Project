@@ -60,17 +60,19 @@ LIMIT 10;
 ```sql
 -- Average ticket (average total per transaction) by city for the latest year
 WITH latest_year AS (
-  SELECT MAX(calendar_year) AS year FROM PRODUCTION.DIM_DATE
+  SELECT MAX(YEAR(date)) AS year FROM SAMBA_DB.PRODUCTION.DIM_DATE
 )
 SELECT
   c.city_name,
-  AVG(f.total_amount_euros) AS avg_ticket_euros,
-  COUNT(DISTINCT f.transaction_id) AS transactions_count
-FROM PRODUCTION.FACT_SALES f
-JOIN PRODUCTION.DIM_DATE d ON f.sale_date = d.date
-JOIN PRODUCTION.DIM_BRANCH b ON f.branch_id = b.branch_id
-JOIN PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
-JOIN latest_year ly ON d.calendar_year = ly.year
+  CAST(AVG(f.revenue) AS DECIMAL(10,2)) AS avg_ticket_euros,
+  COUNT(DISTINCT f.sale_id) AS transactions_count
+FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+JOIN SAMBA_DB.PRODUCTION.DIM_DATE d
+  ON YEAR(f.sale_ts) = YEAR(d.date) 
+  AND MONTH(f.sale_ts) = MONTH(d.date)
+JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
+JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
+JOIN latest_year ly ON YEAR(d.date) = ly.year
 GROUP BY c.city_name
 ORDER BY avg_ticket_euros DESC;
 ```
