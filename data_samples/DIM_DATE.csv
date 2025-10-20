@@ -1,0 +1,11 @@
+DATE_KEY,DATE,DAY,MONTH,YEAR,QUARTER,DAY_NAME,IS_WEEKEND,IS_HOLIDAY,HOLIDAY_NAME,IS_HOLIDAY_EVE,HOLIDAY_EVE_NAME
+1,2009-09-01,1,9,2009,3,Tue,false,false,,false,
+2,2009-09-02,2,9,2009,3,Wed,false,false,,false,
+3,2009-09-03,3,9,2009,3,Thu,false,false,,false,
+4,2009-09-04,4,9,2009,3,Fri,false,false,,false,
+5,2009-09-05,5,9,2009,3,Sat,true,false,,false,
+6,2009-09-06,6,9,2009,3,Sun,true,false,,false,
+7,2009-09-07,7,9,2009,3,Mon,false,false,,false,
+8,2009-09-08,8,9,2009,3,Tue,false,false,,false,
+9,2009-09-09,9,9,2009,3,Wed,false,false,,false,
+10,2009-09-10,10,9,2009,3,Thu,false,false,,false,
