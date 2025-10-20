@@ -315,7 +315,7 @@ ORDER BY branch_id, month_start DESC;
 
 ---
 
-### 11. Product Affinity: Products Frequently Bought Together (Top pairs)
+### 11. Product Affinity: Products Frequently Bought Together (Top pairs)- (Market Basket Analysis)
 **Question:** Which product pairs are most frequently sold in the same transaction (basket affinity)?
 
 ```sql
@@ -375,7 +375,7 @@ ORDER BY avg_margin_pct DESC NULLS LAST;
 
 ---
 
-### 13. Staff Performance: Revenue per Staff-hour (if shift hours available)
+### 13. Staff Performance: Revenue per Staff-hour 
 **Question:** Which staff members deliver highest revenue per recorded hours (productivity measure)?
 
 ```sql
