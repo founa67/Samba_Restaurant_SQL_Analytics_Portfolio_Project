@@ -16,15 +16,16 @@ These are foundational lookups and aggregations to get quick insights from the d
 ```sql
 -- Total revenue and transactions per year
 SELECT
-  d.calendar_year AS year,
-  COUNT(DISTINCT f.transaction_id) AS transactions_count,
-  SUM(f.total_amount_euros) AS total_revenue_euros
-FROM PRODUCTION.FACT_SALES f
-JOIN PRODUCTION.DIM_DATE d
-  ON f.sale_date = d.date -- assuming sale_date is a DATE that maps to DIM_DATE.date
+  YEAR(d.date) AS year,
+  COUNT(DISTINCT f.sale_id) AS transactions_count,
+  SUM(f.revenue) AS total_revenue_euros
+FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+JOIN SAMBA_DB.PRODUCTION.DIM_DATE d
+  ON YEAR(f.sale_ts) = YEAR(d.date) 
+  AND MONTH(f.sale_ts) = MONTH(d.date)
 WHERE d.date BETWEEN '2009-01-01' AND '2022-12-31'
-GROUP BY d.calendar_year
-ORDER BY d.calendar_year;
+GROUP BY YEAR(d.date)
+ORDER BY YEAR(d.date);
 ```
 
 **Expected output interpretation:** A two-column time series listing each year, number of distinct transactions, and total revenue. Useful for high-level trend visualization and YoY checks.
