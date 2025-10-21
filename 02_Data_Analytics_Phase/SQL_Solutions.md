@@ -7,7 +7,7 @@
 The queries below support the business objectives defined in the problem statement: revenue trends, product/category performance, branch benchmarking, seasonality effects including public holidays, and staff productivity. Each query includes a title, explanation, commented Snowflake SQL, and an expected output interpretation.
 
 ---
-# Simple Queries (5)
+# Ad Hoc - Simple Queries 
 These are foundational lookups and aggregations to get quick insights from the dataset.
 
 ### 1. Total Revenue and Transactions by Year
@@ -130,7 +130,7 @@ ORDER BY revenue_euros DESC;
 **Expected output interpretation:** Percent contribution of each category to yearly revenue — useful for strategic category investments.
 
 ---
-# Intermediate Queries (5)
+# Ad Hoc -Intermediate Queries
 These queries use joins, grouping, and basic window functions to compare branches and categories.
 
 ### 6. Branch Revenue Ranking by Year
@@ -174,22 +174,47 @@ ORDER BY calendar_year DESC, year_rank;
 -- Branch deviation from city average revenue (z-score-like)
 WITH branch_year_rev AS (
   SELECT
-    b.branch_id,
+    b.branch_key,
+    b.branch_name,
+    c.city_name,
+    YEAR(d.date) as calendar_year,
+    SUM(f.revenue) AS revenue_euros
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+  JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
+  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(f.sale_ts) = YEAR(d.date)   AND MONTH(f.sale_ts) = MONTH(d.date)
+  WHERE d.date BETWEEN '2009-01-01' AND '2022-12-31'
+  GROUP BY b.branch_key, b.branch_name, c.city_name, YEAR(d.date)
+)
+SELECT
+  calendar_year,
+  branch_key,
+  branch_name,
+  city_name,
+  revenue_euros,
+  RANK() OVER (PARTITION BY calendar_year ORDER BY revenue_euros DESC) AS year_rank
+FROM branch_year_rev
+ORDER BY calendar_year DESC, year_rank;
+-----------------------------------------------------------------------------------------------------------
+WITH branch_year_rev AS (
+  SELECT
+    b.branch_key,
     b.branch_name,
     c.city_id,
     c.city_name,
-    d.calendar_year,
-    SUM(f.total_amount_euros) AS revenue_euros
-  FROM PRODUCTION.FACT_SALES f
-  JOIN PRODUCTION.DIM_BRANCH b ON f.branch_id = b.branch_id
-  JOIN PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
-  JOIN PRODUCTION.DIM_DATE d ON f.sale_date = d.date
-  GROUP BY b.branch_id, b.branch_name, c.city_id, c.city_name, d.calendar_year
+    YEAR(d.date) as calendar_year,
+    SUM(f.revenue) AS revenue_euros
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+  JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
+  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(f.sale_ts) = YEAR(d.date)   AND MONTH(f.sale_ts) = MONTH(d.date)
+  GROUP BY b.branch_key, b.branch_name, c.city_id, c.city_name, YEAR(d.date)
 ),
 city_stats AS (
   SELECT city_id, calendar_year,
-         AVG(revenue_euros) AS city_avg_rev,
-         STDDEV_POP(revenue_euros) AS city_rev_stddev
+         CAST(AVG(revenue_euros) as decimal(10,2)) AS city_avg_rev,
+         CAST(STDDEV_POP(revenue_euros) as decimal(10,2)) AS city_rev_stddev
+         
   FROM branch_year_rev
   GROUP BY city_id, calendar_year
 )
