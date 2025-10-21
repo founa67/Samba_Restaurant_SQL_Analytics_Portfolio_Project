@@ -277,7 +277,7 @@ ORDER BY s.calendar_year;
 **Expected output interpretation:** Yearly percentage lift (or decline) in daily revenue when the day is a public holiday. Useful for promotional planning and staffing during holidays.
 
 ---
-# Advanced Queries (5)
+# Ad Hoc - Advanced Queries
 Advanced analytics using window functions, advanced time intelligence, cohort-like comparisons, and product-branch interactions.
 
 ### 10. Rolling 12-Month Revenue Growth per Branch (Month-end)
@@ -287,35 +287,38 @@ Advanced analytics using window functions, advanced time intelligence, cohort-li
 -- 12-month rolling revenue and YoY pct change by branch at month level
 WITH monthly_branch_rev AS (
   SELECT
-    b.branch_id,
+    b.branch_key,
     b.branch_name,
     DATE_TRUNC('month', d.date) AS month_start,
-    SUM(f.total_amount_euros) AS revenue_month
-  FROM PRODUCTION.FACT_SALES f
-  JOIN PRODUCTION.DIM_BRANCH b ON f.branch_id = b.branch_id
-  JOIN PRODUCTION.DIM_DATE d ON f.sale_date = d.date
-  GROUP BY b.branch_id, b.branch_name, DATE_TRUNC('month', d.date)
+    SUM(f.revenue) AS revenue_month
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+  JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(f.sale_ts) = YEAR(d.date) AND MONTH(f.sale_ts) = MONTH(d.date)
+  GROUP BY b.branch_key, b.branch_name, DATE_TRUNC('month', d.date)
 ),
 rolling AS (
   SELECT
-    branch_id,
+    branch_key,
     branch_name,
     month_start,
-    SUM(revenue_month) OVER (PARTITION BY branch_id ORDER BY month_start ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS rolling_12m_rev,
-    LAG(SUM(revenue_month) OVER (PARTITION BY branch_id ORDER BY month_start ROWS BETWEEN 11 PRECEDING AND CURRENT ROW), 12) OVER (PARTITION BY branch_id ORDER BY month_start) AS prev_12m_rev
+    -- Current 12-month rolling sum
+    SUM(revenue_month) OVER (PARTITION BY branch_key ORDER BY month_start ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS rolling_12m_rev,
+    -- Previous 12-month rolling sum (months 13-24 months ago)
+    SUM(revenue_month) OVER (PARTITION BY branch_key ORDER BY month_start ROWS BETWEEN 23 PRECEDING AND 12 PRECEDING) AS prev_12m_rev
   FROM monthly_branch_rev
 )
 SELECT
-  branch_id,
+  branch_key,
   branch_name,
   month_start,
   rolling_12m_rev,
   prev_12m_rev,
-  CASE WHEN prev_12m_rev IS NULL OR prev_12m_rev = 0 THEN NULL
-       ELSE ROUND((rolling_12m_rev - prev_12m_rev) / prev_12m_rev * 100, 2)
+  CASE 
+    WHEN prev_12m_rev IS NULL OR prev_12m_rev = 0 THEN NULL
+    ELSE ROUND((rolling_12m_rev - prev_12m_rev) / prev_12m_rev * 100, 2)
   END AS pct_change_vs_prev_12m
 FROM rolling
-ORDER BY branch_id, month_start DESC;
+ORDER BY branch_key, month_start DESC;
 ```
 
 **Expected output interpretation:** For each branch and month, show a trailing 12-month revenue and percent change versus the prior 12 months — useful for detecting sustained growth or decline.
