@@ -170,7 +170,8 @@ ORDER BY calendar_year DESC, year_rank;
 ### 7. Compare Branch Performance to City Average (Z-score style)
 **Question:** Which branches deviate most from their city peers in terms of yearly revenue?
 
-```sqlWITH branch_year_rev AS (
+```sql
+WITH branch_year_rev AS (
   SELECT
     b.branch_key,
     b.branch_name,
