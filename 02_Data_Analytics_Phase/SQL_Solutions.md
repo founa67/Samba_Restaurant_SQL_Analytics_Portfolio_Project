@@ -180,8 +180,8 @@ WITH branch_year_rev AS (
     SUM(f.revenue) AS revenue_euros
   FROM SAMBA_DB.PRODUCTION.FACT_SALES f
   JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
-  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
-  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(f.sale_ts) = YEAR(d.date)   AND MONTH(f.sale_ts) = MONTH(d.date)
+  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON DATE(f.sale_ts) = d.date
   GROUP BY b.branch_key, b.branch_name, c.city_id, c.city_name, YEAR(d.date)
 ),
 city_stats AS (
@@ -225,8 +225,8 @@ city_cat_rev AS (
   FROM SAMBA_DB.PRODUCTION.FACT_SALES f
   JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT p ON f.product_key = p.product_key
   JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
-  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
-  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(f.sale_ts) = YEAR(d.date)   AND MONTH(f.sale_ts) = MONTH(d.date)
+  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON DATE(f.sale_ts) = d.date
   JOIN latest_year ly ON YEAR(d.date) = ly.year
   GROUP BY c.city_name, p.category
 )
@@ -253,7 +253,7 @@ ORDER BY city_name, revenue_euros DESC;
 WITH sales_with_meta AS (
   SELECT f.sale_ts, week(d.date), YEAR(d.date) as calendar_year, SUM(f.revenue) AS daily_revenue
   FROM SAMBA_DB.PRODUCTION.FACT_SALES f
-  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d  ON YEAR(f.sale_ts) = YEAR(d.date)   AND MONTH(f.sale_ts) = MONTH(d.date)
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d  ON DATE(f.sale_ts) = d.date
   GROUP BY f.sale_ts, week(d.date), YEAR(d.date)
 ),
 holiday_flags AS (
@@ -292,7 +292,7 @@ WITH monthly_branch_rev AS (
     SUM(f.revenue) AS revenue_month
   FROM SAMBA_DB.PRODUCTION.FACT_SALES f
   JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
-  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(f.sale_ts) = YEAR(d.date) AND MONTH(f.sale_ts) = MONTH(d.date)
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON DATE(f.sale_ts) = d.date
   GROUP BY b.branch_key, b.branch_name, DATE_TRUNC('month', d.date)
 ),
 rolling AS (
@@ -379,7 +379,7 @@ SELECT
 FROM SAMBA_DB.PRODUCTION.FACT_SALES f
 JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT p ON f.product_key = p.product_key
 JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
-JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
+JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
 GROUP BY c.city_name, p.category
 ORDER BY avg_margin_pct DESC NULLS LAST;
 ```
@@ -432,7 +432,7 @@ WITH cat_year_rev AS (
     SUM(fs.revenue) AS revenue_euros
   FROM SAMBA_DB.PRODUCTION.FACT_SALES fs
   JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT p ON fs.product_key = p.product_key
-  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(fs.sale_ts) = YEAR(d.date) AND MONTH(fs.sale_ts) = MONTH(d.date)
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON DATE(f.sale_ts) = d.date
   GROUP BY p.category, YEAR(d.date)
 )
 SELECT
@@ -471,7 +471,7 @@ WITH branch_metrics AS (
     AVG(NULLIF((fs.revenue - fs.cost) / NULLIF(fs.revenue, 0), 0) * 100) AS avg_margin_pct
   FROM SAMBA_DB.PRODUCTION.FACT_SALES fs
   JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH br ON fs.branch_key = br.branch_key
-  JOIN SAMBA_DB.PRODUCTION.DIM_CITY ct ON br.city_name = ct.city_name
+  JOIN SAMBA_DB.PRODUCTION.DIM_CITY ct ON br.city_id = ct.city_id
   GROUP BY br.branch_key, br.branch_name, ct.city_name
 ),
 metrics_stats AS (
