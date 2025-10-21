@@ -114,8 +114,7 @@ cat_rev AS (
   FROM SAMBA_DB.PRODUCTION.FACT_SALES f
   JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT p ON f.PRODUCT_KEY = p.PRODUCT_KEY
   JOIN SAMBA_DB.PRODUCTION.DIM_DATE d
-  ON YEAR(f.sale_ts) = YEAR(d.date) 
-  AND MONTH(f.sale_ts) = MONTH(d.date)
+  ON DATE(f.sale_ts) = d.date
   JOIN latest_year ly ON YEAR(d.date) = ly.year
   GROUP BY p.category
 )
