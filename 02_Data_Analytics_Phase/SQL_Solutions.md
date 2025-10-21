@@ -146,8 +146,8 @@ WITH branch_year_rev AS (
     SUM(f.revenue) AS revenue_euros
   FROM SAMBA_DB.PRODUCTION.FACT_SALES f
   JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
-  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
-  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(f.sale_ts) = YEAR(d.date)   AND MONTH(f.sale_ts) = MONTH(d.date)
+  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON DATE(f.sale_ts) = d.date
   WHERE d.date BETWEEN '2009-01-01' AND '2022-12-31'
   GROUP BY b.branch_key, b.branch_name, c.city_name, YEAR(d.date)
 )
