@@ -252,13 +252,13 @@ ORDER BY city_name, revenue_euros DESC;
 ```sql
 -- Compare average daily sales on holidays vs non-holidays within the same ISO week
 WITH sales_with_meta AS (
-  SELECT f.sale_date, d.iso_week, d.calendar_year, SUM(f.total_amount_euros) AS daily_revenue
-  FROM PRODUCTION.FACT_SALES f
-  JOIN PRODUCTION.DIM_DATE d ON f.sale_date = d.date
-  GROUP BY f.sale_date, d.iso_week, d.calendar_year
+  SELECT f.sale_ts, week(d.date), YEAR(d.date) as calendar_year, SUM(f.revenue) AS daily_revenue
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d  ON YEAR(f.sale_ts) = YEAR(d.date)   AND MONTH(f.sale_ts) = MONTH(d.date)
+  GROUP BY f.sale_ts, week(d.date), YEAR(d.date)
 ),
 holiday_flags AS (
-  SELECT date AS hol_date, TRUE AS is_holiday FROM PRODUCTION.DIM_KENYA_PUBLIC_HOLIDAYS
+  SELECT HOLIDAY_DATE AS hol_date, TRUE AS is_holiday FROM SAMBA_DB.PRODUCTION.DIM_KENYA_PUBLIC_HOLIDAYS
 )
 SELECT
   s.calendar_year,
@@ -269,7 +269,7 @@ SELECT
     / NULLIF(AVG(CASE WHEN h.hol_date IS NULL THEN s.daily_revenue END),0) * 100, 2
   ) AS pct_lift_vs_non_holiday
 FROM sales_with_meta s
-LEFT JOIN holiday_flags h ON s.sale_date = h.hol_date
+LEFT JOIN holiday_flags h ON date(s.sale_ts) = h.hol_date
 GROUP BY s.calendar_year
 ORDER BY s.calendar_year;
 ```
