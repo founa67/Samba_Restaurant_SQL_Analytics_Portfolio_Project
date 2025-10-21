@@ -170,33 +170,7 @@ ORDER BY calendar_year DESC, year_rank;
 ### 7. Compare Branch Performance to City Average (Z-score style)
 **Question:** Which branches deviate most from their city peers in terms of yearly revenue?
 
-```sql
--- Branch deviation from city average revenue (z-score-like)
-WITH branch_year_rev AS (
-  SELECT
-    b.branch_key,
-    b.branch_name,
-    c.city_name,
-    YEAR(d.date) as calendar_year,
-    SUM(f.revenue) AS revenue_euros
-  FROM SAMBA_DB.PRODUCTION.FACT_SALES f
-  JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
-  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
-  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(f.sale_ts) = YEAR(d.date)   AND MONTH(f.sale_ts) = MONTH(d.date)
-  WHERE d.date BETWEEN '2009-01-01' AND '2022-12-31'
-  GROUP BY b.branch_key, b.branch_name, c.city_name, YEAR(d.date)
-)
-SELECT
-  calendar_year,
-  branch_key,
-  branch_name,
-  city_name,
-  revenue_euros,
-  RANK() OVER (PARTITION BY calendar_year ORDER BY revenue_euros DESC) AS year_rank
-FROM branch_year_rev
-ORDER BY calendar_year DESC, year_rank;
------------------------------------------------------------------------------------------------------------
-WITH branch_year_rev AS (
+```sqlWITH branch_year_rev AS (
   SELECT
     b.branch_key,
     b.branch_name,
@@ -243,15 +217,17 @@ LIMIT 50;
 **Question:** What are the top 3 categories by revenue in each city for the latest year?
 
 ```sql
-WITH latest_year AS (SELECT MAX(calendar_year) AS year FROM PRODUCTION.DIM_DATE),
+WITH latest_year AS (
+  SELECT MAX(YEAR(date)) AS year FROM SAMBA_DB.PRODUCTION.DIM_DATE
+),
 city_cat_rev AS (
-  SELECT c.city_name, p.category, SUM(f.total_amount_euros) AS revenue_euros
-  FROM PRODUCTION.FACT_SALES f
-  JOIN PRODUCTION.DIM_PRODUCT p ON f.product_id = p.product_id
-  JOIN PRODUCTION.DIM_BRANCH b ON f.branch_id = b.branch_id
-  JOIN PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
-  JOIN PRODUCTION.DIM_DATE d ON f.sale_date = d.date
-  JOIN latest_year ly ON d.calendar_year = ly.year
+  SELECT c.city_name, p.category, SUM(f.revenue) AS revenue_euros
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+  JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT p ON f.product_key = p.product_key
+  JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
+  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(f.sale_ts) = YEAR(d.date)   AND MONTH(f.sale_ts) = MONTH(d.date)
+  JOIN latest_year ly ON YEAR(d.date) = ly.year
   GROUP BY c.city_name, p.category
 )
 SELECT city_name, category, revenue_euros
