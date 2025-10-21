@@ -374,13 +374,13 @@ LIMIT 50;
 SELECT
   c.city_name,
   p.category,
-  ROUND(AVG(NULLIF((f.total_amount_euros - f.cost_amount_euros) / NULLIF(f.total_amount_euros,0),0) * 100), 2) AS avg_margin_pct,
-  SUM(f.total_amount_euros) AS revenue_euros,
-  COUNT(DISTINCT f.transaction_id) AS transaction_count
-FROM PRODUCTION.FACT_SALES f
-JOIN PRODUCTION.DIM_PRODUCT p ON f.product_id = p.product_id
-JOIN PRODUCTION.DIM_BRANCH b ON f.branch_id = b.branch_id
-JOIN PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
+  ROUND(AVG(NULLIF((f.revenue - f.cost) / NULLIF(f.revenue, 0), 0) * 100), 2) AS avg_margin_pct,
+  SUM(f.revenue) AS revenue_euros,
+  COUNT(DISTINCT f.sale_id) AS transaction_count
+FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT p ON f.product_key = p.product_key
+JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
+JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
 GROUP BY c.city_name, p.category
 ORDER BY avg_margin_pct DESC NULLS LAST;
 ```
@@ -389,35 +389,31 @@ ORDER BY avg_margin_pct DESC NULLS LAST;
 
 ---
 
-### 13. Staff Performance: Revenue per Staff-hour 
-**Question:** Which staff members deliver highest revenue per recorded hours (productivity measure)?
+### 13. Staff Performance: Revenue per Staff 
+**Question:** Which staff members deliver highest revenue (productivity measure)?
 
 ```sql
--- Assumes FACT_SALES has staff_id and possibly shift_hours in DIM_STAFF or similar.
--- If shift_hours are not available, this query uses staff scheduled hours in DIM_STAFF.shift_hours_monthly (example)
+-- Staff revenue performance (without hours data)
 WITH staff_sales AS (
-  SELECT s.staff_id, s.staff_name, SUM(f.total_amount_euros) AS revenue_euros
-  FROM PRODUCTION.FACT_SALES f
-  JOIN PRODUCTION.DIM_STAFF s ON f.staff_id = s.staff_id
-  GROUP BY s.staff_id, s.staff_name
-),
-staff_hours AS (
-  -- If you have a monthly recorded hours field; adjust as needed.
-  SELECT staff_id, SUM(shift_hours) AS total_hours
-  FROM PRODUCTION.DIM_STAFF -- replace with a real timesheet table if available
-  GROUP BY staff_id
+  SELECT 
+    s.staff_key, 
+    s.first_name,
+    s.role,
+    SUM(fs.revenue) AS revenue_euros,
+    COUNT(DISTINCT fs.sale_id) AS transaction_count
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES fs
+  JOIN SAMBA_DB.PRODUCTION.DIM_STAFF s ON fs.staff_key = s.staff_key
+  GROUP BY s.staff_key, s.first_name, s.role
 )
 SELECT
-  ss.staff_id,
-  ss.staff_name,
-  ss.revenue_euros,
-  sh.total_hours,
-  CASE WHEN sh.total_hours IS NULL OR sh.total_hours = 0 THEN NULL
-       ELSE ROUND(ss.revenue_euros / sh.total_hours, 2)
-  END AS revenue_per_hour_euros
-FROM staff_sales ss
-LEFT JOIN staff_hours sh ON ss.staff_id = sh.staff_id
-ORDER BY revenue_per_hour_euros DESC NULLS LAST
+  staff_key,
+  first_name,
+  role,
+  revenue_euros,
+  transaction_count,
+  ROUND(revenue_euros / NULLIF(transaction_count, 0), 2) AS avg_revenue_per_transaction
+FROM staff_sales
+ORDER BY revenue_euros DESC
 LIMIT 50;
 ```
 
