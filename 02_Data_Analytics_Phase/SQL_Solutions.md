@@ -140,21 +140,21 @@ These queries use joins, grouping, and basic window functions to compare branche
 -- Branch ranking per year by revenue
 WITH branch_year_rev AS (
   SELECT
-    b.branch_id,
+    b.branch_key,
     b.branch_name,
     c.city_name,
-    d.calendar_year,
-    SUM(f.total_amount_euros) AS revenue_euros
-  FROM PRODUCTION.FACT_SALES f
-  JOIN PRODUCTION.DIM_BRANCH b ON f.branch_id = b.branch_id
-  JOIN PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
-  JOIN PRODUCTION.DIM_DATE d ON f.sale_date = d.date
+    YEAR(d.date) as calendar_year,
+    SUM(f.revenue) AS revenue_euros
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+  JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
+  JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(f.sale_ts) = YEAR(d.date)   AND MONTH(f.sale_ts) = MONTH(d.date)
   WHERE d.date BETWEEN '2009-01-01' AND '2022-12-31'
-  GROUP BY b.branch_id, b.branch_name, c.city_name, d.calendar_year
+  GROUP BY b.branch_key, b.branch_name, c.city_name, YEAR(d.date)
 )
 SELECT
   calendar_year,
-  branch_id,
+  branch_key,
   branch_name,
   city_name,
   revenue_euros,
