@@ -421,29 +421,36 @@ LIMIT 50;
 
 ---
 
-### 14. Year-over-Year Sales Growth by Category with Statistical Significance-like Check
+### 14. Year-over-Year Sales Growth by Category with Statistical Significance-like Check. Portfolio Growth
 **Question:** Which categories show consistent YoY growth and which are declining?
 
 ```sql
 -- YoY growth per category and simple persistence check
 WITH cat_year_rev AS (
-  SELECT p.category, d.calendar_year, SUM(f.total_amount_euros) AS revenue_euros
-  FROM PRODUCTION.FACT_SALES f
-  JOIN PRODUCTION.DIM_PRODUCT p ON f.product_id = p.product_id
-  JOIN PRODUCTION.DIM_DATE d ON f.sale_date = d.date
-  GROUP BY p.category, d.calendar_year
+  SELECT 
+    p.category, 
+    YEAR(d.date) AS year, 
+    SUM(fs.revenue) AS revenue_euros
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES fs
+  JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT p ON fs.product_key = p.product_key
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d ON YEAR(fs.sale_ts) = YEAR(d.date) AND MONTH(fs.sale_ts) = MONTH(d.date)
+  GROUP BY p.category, YEAR(d.date)
 )
 SELECT
   cy.category,
   cy.year,
   cy.revenue_euros,
   LAG(cy.revenue_euros) OVER (PARTITION BY cy.category ORDER BY cy.year) AS prev_year_rev,
-  CASE WHEN LAG(cy.revenue_euros) OVER (PARTITION BY cy.category ORDER BY cy.year) IS NULL THEN NULL
-       ELSE ROUND((cy.revenue_euros - LAG(cy.revenue_euros) OVER (PARTITION BY cy.category ORDER BY cy.year)) 
-                  / LAG(cy.revenue_euros) OVER (PARTITION BY cy.category ORDER BY cy.year) * 100, 2)
+  CASE 
+    WHEN LAG(cy.revenue_euros) OVER (PARTITION BY cy.category ORDER BY cy.year) IS NULL THEN NULL
+    ELSE ROUND(
+      (cy.revenue_euros - LAG(cy.revenue_euros) OVER (PARTITION BY cy.category ORDER BY cy.year)) 
+      / LAG(cy.revenue_euros) OVER (PARTITION BY cy.category ORDER BY cy.year) * 100, 
+      2
+    )
   END AS pct_yoy
 FROM cat_year_rev cy
-ORDER BY category, year;
+ORDER BY cy.category, cy.year;
 ```
 
 **Expected output interpretation:** YoY percentage change for each category by year — identifies categories with sustained growth or decline. Use with charts to spot consistent patterns.
