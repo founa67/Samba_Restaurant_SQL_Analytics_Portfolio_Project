@@ -464,41 +464,44 @@ ORDER BY cy.category, cy.year;
 -- Create a composite z-score-like metric and bucket branches into performance groups
 WITH branch_metrics AS (
   SELECT
-    b.branch_id,
-    b.branch_name,
-    c.city_name,
-    SUM(f.total_amount_euros) AS total_revenue,
-    AVG(f.total_amount_euros) AS avg_ticket,
-    AVG(NULLIF((f.total_amount_euros - f.cost_amount_euros) / NULLIF(f.total_amount_euros,0),0) * 100) AS avg_margin_pct
-  FROM PRODUCTION.FACT_SALES f
-  JOIN PRODUCTION.DIM_BRANCH b ON f.branch_id = b.branch_id
-  JOIN PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
-  GROUP BY b.branch_id, b.branch_name, c.city_name
+    br.branch_key,
+    br.branch_name,
+    ct.city_name,
+    SUM(fs.revenue) AS total_revenue,
+    AVG(fs.revenue) AS avg_ticket,
+    AVG(NULLIF((fs.revenue - fs.cost) / NULLIF(fs.revenue, 0), 0) * 100) AS avg_margin_pct
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES fs
+  JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH br ON fs.branch_key = br.branch_key
+  JOIN SAMBA_DB.PRODUCTION.DIM_CITY ct ON br.city_name = ct.city_name
+  GROUP BY br.branch_key, br.branch_name, ct.city_name
 ),
 metrics_stats AS (
   SELECT
-    AVG(total_revenue) AS avg_rev, STDDEV_POP(total_revenue) AS std_rev,
-    AVG(avg_ticket) AS avg_ticket_all, STDDEV_POP(avg_ticket) AS std_ticket,
-    AVG(avg_margin_pct) AS avg_margin_all, STDDEV_POP(avg_margin_pct) AS std_margin
+    AVG(total_revenue) AS avg_rev,
+    STDDEV_POP(total_revenue) AS std_rev,
+    AVG(avg_ticket) AS avg_ticket_all,
+    STDDEV_POP(avg_ticket) AS std_ticket,
+    AVG(avg_margin_pct) AS avg_margin_all,
+    STDDEV_POP(avg_margin_pct) AS std_margin
   FROM branch_metrics
 )
 SELECT
-  bm.branch_id,
+  bm.branch_key,
   bm.branch_name,
   bm.city_name,
   bm.total_revenue,
-  bm.avg_ticket,
+  CAST(bm.avg_ticket AS decimal(10,2)) as avg_ticket,
   bm.avg_margin_pct,
   -- z-scores
-  ROUND((bm.total_revenue - ms.avg_rev) / NULLIF(ms.std_rev,0), 2) AS z_rev,
-  ROUND((bm.avg_ticket - ms.avg_ticket_all) / NULLIF(ms.std_ticket,0), 2) AS z_ticket,
-  ROUND((bm.avg_margin_pct - ms.avg_margin_all) / NULLIF(ms.std_margin,0), 2) AS z_margin,
+  ROUND((bm.total_revenue - ms.avg_rev) / NULLIF(ms.std_rev, 0), 2) AS z_rev,
+  ROUND((bm.avg_ticket - ms.avg_ticket_all) / NULLIF(ms.std_ticket, 0), 2) AS z_ticket,
+  ROUND((bm.avg_margin_pct - ms.avg_margin_all) / NULLIF(ms.std_margin, 0), 2) AS z_margin,
   -- composite score (simple weighted sum, weights adjustable)
   ROUND(
-    COALESCE((bm.total_revenue - ms.avg_rev) / NULLIF(ms.std_rev,0),0) * 0.5
-    + COALESCE((bm.avg_ticket - ms.avg_ticket_all) / NULLIF(ms.std_ticket,0),0) * 0.3
-    + COALESCE((bm.avg_margin_pct - ms.avg_margin_all) / NULLIF(ms.std_margin,0),0) * 0.2
-  ,2) AS composite_score,
+    COALESCE((bm.total_revenue - ms.avg_rev) / NULLIF(ms.std_rev, 0), 0) * 0.5
+    + COALESCE((bm.avg_ticket - ms.avg_ticket_all) / NULLIF(ms.std_ticket, 0), 0) * 0.3
+    + COALESCE((bm.avg_margin_pct - ms.avg_margin_all) / NULLIF(ms.std_margin, 0), 0) * 0.2
+  , 2) AS composite_score,
   CASE
     WHEN composite_score >= 1.0 THEN 'Top'
     WHEN composite_score BETWEEN 0 AND 1.0 THEN 'Mid'
