@@ -69,10 +69,9 @@ SELECT
   COUNT(DISTINCT f.sale_id) AS transactions_count
 FROM SAMBA_DB.PRODUCTION.FACT_SALES f
 JOIN SAMBA_DB.PRODUCTION.DIM_DATE d
-  ON YEAR(f.sale_ts) = YEAR(d.date) 
-  AND MONTH(f.sale_ts) = MONTH(d.date)
+ON DATE(f.sale_ts) = d.date
 JOIN SAMBA_DB.PRODUCTION.DIM_BRANCH b ON f.branch_key = b.branch_key
-JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_name = c.city_name
+JOIN SAMBA_DB.PRODUCTION.DIM_CITY c ON b.city_id = c.city_id
 JOIN latest_year ly ON YEAR(d.date) = ly.year
 GROUP BY c.city_name
 ORDER BY avg_ticket_euros DESC;
