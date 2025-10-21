@@ -331,29 +331,33 @@ ORDER BY branch_key, month_start DESC;
 ```sql
 -- Frequent product pairs in same transaction (approximate, top pairs)
 WITH tx_products AS (
-  SELECT transaction_id, product_id
-  FROM PRODUCTION.FACT_SALES
-  WHERE product_id IS NOT NULL
-  GROUP BY transaction_id, product_id
+  SELECT 
+    SAMBA_DB.PRODUCTION.FACT_SALES.sale_id, 
+    SAMBA_DB.PRODUCTION.FACT_SALES.product_key
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES
+  WHERE SAMBA_DB.PRODUCTION.FACT_SALES.product_key IS NOT NULL
+  GROUP BY 
+    SAMBA_DB.PRODUCTION.FACT_SALES.sale_id, 
+    SAMBA_DB.PRODUCTION.FACT_SALES.product_key
 ),
 pairs AS (
   SELECT
-    a.product_id AS product_a,
-    b.product_id AS product_b,
+    a.product_key AS product_a,
+    b.product_key AS product_b,
     COUNT(*) AS cooccurrence_count
   FROM tx_products a
   JOIN tx_products b
-    ON a.transaction_id = b.transaction_id
-   AND a.product_id < b.product_id -- avoid duplicate reversed pairs and self-pairing
-  GROUP BY a.product_id, b.product_id
+    ON a.sale_id = b.sale_id
+   AND a.product_key < b.product_key -- avoid duplicate reversed pairs and self-pairing
+  GROUP BY a.product_key, b.product_key
 )
 SELECT
   pa.product_name AS product_a_name,
   pb.product_name AS product_b_name,
   p.cooccurrence_count
 FROM pairs p
-JOIN PRODUCTION.DIM_PRODUCT pa ON p.product_a = pa.product_id
-JOIN PRODUCTION.DIM_PRODUCT pb ON p.product_b = pb.product_id
+JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT pa ON p.product_a = pa.product_key
+JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT pb ON p.product_b = pb.product_key
 ORDER BY p.cooccurrence_count DESC
 LIMIT 50;
 ```
