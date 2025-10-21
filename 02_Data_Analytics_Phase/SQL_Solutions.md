@@ -28,7 +28,7 @@ GROUP BY YEAR(d.date)
 ORDER BY YEAR(d.date);
 ```
 
-**Expected output interpretation:** A two-column time series listing each year, number of distinct transactions, and total revenue. Useful for high-level trend visualization and YoY checks.
+**Output interpretation:** A two-column time series listing each year, number of distinct transactions, and total revenue. Useful for high-level trend visualization and YoY checks.
 
 ---
 
@@ -50,7 +50,7 @@ ORDER BY revenue_euros DESC
 LIMIT 10;
 ```
 
-**Expected output interpretation:** Top 10 products contributing most to revenue and units sold — used for menu prioritization and promotional focus.
+**Output interpretation:** Top 10 products contributing most to revenue and units sold — used for menu prioritization and promotional focus.
 
 ---
 
@@ -77,7 +77,7 @@ GROUP BY c.city_name
 ORDER BY avg_ticket_euros DESC;
 ```
 
-**Expected output interpretation:** Average spend per transaction in each city for the latest year — helps assess customer value across regions.
+**Output interpretation:** Average spend per transaction in each city for the latest year — helps assess customer value across regions.
 
 ---
 
@@ -97,7 +97,7 @@ GROUP BY DATE(f.sale_ts)
 ORDER BY sale_date;
 ```
 
-**Expected output interpretation:** Time series of daily revenue and units sold for a specific branch and month — useful for operational analysis and anomaly detection.
+**Output interpretation:** Time series of daily revenue and units sold for a specific branch and month — useful for operational analysis and anomaly detection.
 
 ---
 
@@ -127,7 +127,7 @@ FROM cat_rev
 ORDER BY revenue_euros DESC;
 ```
 
-**Expected output interpretation:** Percent contribution of each category to yearly revenue — useful for strategic category investments.
+**Output interpretation:** Percent contribution of each category to yearly revenue — useful for strategic category investments.
 
 ---
 # Ad Hoc -Intermediate Queries
@@ -163,7 +163,7 @@ FROM branch_year_rev
 ORDER BY calendar_year DESC, year_rank;
 ```
 
-**Expected output interpretation:** Yearly rank of each branch — highlights branches that consistently lead or improve/decline year to year.
+**Output interpretation:** Yearly rank of each branch — highlights branches that consistently lead or improve/decline year to year.
 
 ---
 
@@ -210,7 +210,7 @@ ORDER BY rev_z DESC NULLS LAST
 LIMIT 50;
 ```
 
-**Expected output interpretation:** Branches with highest positive or negative z-scores versus their city peers — useful to prioritize investigation and replicate best practices.
+**Output interpretation:** Branches with highest positive or negative z-scores versus their city peers — useful to prioritize investigation and replicate best practices.
 
 ---
 
@@ -242,7 +242,7 @@ WHERE rn <= 3
 ORDER BY city_name, revenue_euros DESC;
 ```
 
-**Expected output interpretation:** Top 3 revenue-driving categories in each city — guides localized marketing and assortment decisions.
+**Output interpretation:** Top 3 revenue-driving categories in each city — guides localized marketing and assortment decisions.
 
 ---
 
@@ -274,7 +274,7 @@ GROUP BY s.calendar_year
 ORDER BY s.calendar_year;
 ```
 
-**Expected output interpretation:** Yearly percentage lift (or decline) in daily revenue when the day is a public holiday. Useful for promotional planning and staffing during holidays.
+**Output interpretation:** Yearly percentage lift (or decline) in daily revenue when the day is a public holiday. Useful for promotional planning and staffing during holidays.
 
 ---
 # Ad Hoc - Advanced Queries
@@ -321,7 +321,7 @@ FROM rolling
 ORDER BY branch_key, month_start DESC;
 ```
 
-**Expected output interpretation:** For each branch and month, show a trailing 12-month revenue and percent change versus the prior 12 months — useful for detecting sustained growth or decline.
+**Output interpretation:** For each branch and month, show a trailing 12-month revenue and percent change versus the prior 12 months — useful for detecting sustained growth or decline.
 
 ---
 
@@ -362,7 +362,7 @@ ORDER BY p.cooccurrence_count DESC
 LIMIT 50;
 ```
 
-**Expected output interpretation:** Top 50 product pairs most commonly purchased together; useful for cross-sell bundles and menu placement.
+**Output interpretation:** Top 50 product pairs most commonly purchased together; useful for cross-sell bundles and menu placement.
 
 ---
 
@@ -385,7 +385,7 @@ GROUP BY c.city_name, p.category
 ORDER BY avg_margin_pct DESC NULLS LAST;
 ```
 
-**Expected output interpretation:** A list ranking city-category pairs by average margin percentage — helps focus assortment and pricing by geography.
+**Output interpretation:** A list ranking city-category pairs by average margin percentage — helps focus assortment and pricing by geography.
 
 ---
 
@@ -417,7 +417,7 @@ ORDER BY revenue_euros DESC
 LIMIT 50;
 ```
 
-**Expected output interpretation:** Ranking of staff by revenue generated per hour — best interpreted with caution (influence of shift assignments and role differences).
+**Output interpretation:** Ranking of staff by revenue generated per hour — best interpreted with caution (influence of shift assignments and role differences).
 
 ---
 
@@ -453,7 +453,7 @@ FROM cat_year_rev cy
 ORDER BY cy.category, cy.year;
 ```
 
-**Expected output interpretation:** YoY percentage change for each category by year — identifies categories with sustained growth or decline. Use with charts to spot consistent patterns.
+**Output interpretation:** YoY percentage change for each category by year — identifies categories with sustained growth or decline. Use with charts to spot consistent patterns.
 
 ---
 
@@ -512,12 +512,10 @@ CROSS JOIN metrics_stats ms
 ORDER BY composite_score DESC;
 ```
 
-**Expected output interpretation:** A ranked list of branches with composite score and buckets. Use to target best practices, replications, or interventions for low-performing stores.
+**Output interpretation:** A ranked list of branches with composite score and buckets. Use to target best practices, replications, or interventions for low-performing stores.
 
 ---
 # Final notes & recommendations
-1. Parameterize queries (e.g., `:branch_id`, `:start_date`, `:end_date`) before embedding into dashboards or scheduled jobs.  
-2. Materialize intermediate heavy queries into Snowflake transient tables or results caching if used frequently in dashboards.  
-3. Consider adding a denormalized reporting table (monthly_aggregates) to accelerate BI dashboards for executive stakeholders.  
-4. Validate costs (e.g., `cost_amount_euros`) and missing data handling before computing margins.  
-5. Document assumptions (time zone, currency, refunds handling) alongside the queries in your portfolio README.
+1. Materialize intermediate heavy queries into Snowflake transient tables or results caching if used frequently in dashboards.  
+2. Consider adding a denormalized reporting table (monthly_aggregates) to accelerate BI dashboards for executive stakeholders.  
+
