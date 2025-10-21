@@ -20,9 +20,10 @@ SELECT
   COUNT(DISTINCT f.sale_id) AS transactions_count,
   SUM(f.revenue) AS total_revenue_euros
 FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT p
+ON f.product_key=p.product_key
 JOIN SAMBA_DB.PRODUCTION.DIM_DATE d
-  ON YEAR(f.sale_ts) = YEAR(d.date) 
-  AND MONTH(f.sale_ts) = MONTH(d.date)
+ON DATE(f.sale_ts) = d.date
 WHERE d.date BETWEEN '2009-01-01' AND '2022-12-31'
 GROUP BY YEAR(d.date)
 ORDER BY YEAR(d.date);
