@@ -81,7 +81,7 @@ ORDER BY avg_ticket_euros DESC;
 
 ---
 
-### 4. Daily Sales for a Given Branch (Sample)
+### 4. Daily Sales for a Given Branch (Branch - 18)
 **Question:** What were daily total sales for branch X in January 2022?
 
 ```sql
@@ -101,20 +101,22 @@ ORDER BY sale_date;
 
 ---
 
-### 5. Product Mix Share by Category (Latest Year)
+### 5. Product Mix Share by Category (Latest Year). Portfolio Analysis
 **Question:** What share of revenue does each product category contribute in the latest year?
 
 ```sql
 WITH latest_year AS (
-  SELECT MAX(calendar_year) AS year FROM PRODUCTION.DIM_DATE
+  SELECT MAX(YEAR(date)) AS year FROM SAMBA_DB.PRODUCTION.DIM_DATE
 ),
 cat_rev AS (
   SELECT p.category,
-         SUM(f.total_amount_euros) AS revenue_euros
-  FROM PRODUCTION.FACT_SALES f
-  JOIN PRODUCTION.DIM_PRODUCT p ON f.product_id = p.product_id
-  JOIN PRODUCTION.DIM_DATE d ON f.sale_date = d.date
-  JOIN latest_year ly ON d.calendar_year = ly.year
+         SUM(f.revenue) AS revenue_euros
+  FROM SAMBA_DB.PRODUCTION.FACT_SALES f
+  JOIN SAMBA_DB.PRODUCTION.DIM_PRODUCT p ON f.PRODUCT_KEY = p.PRODUCT_KEY
+  JOIN SAMBA_DB.PRODUCTION.DIM_DATE d
+  ON YEAR(f.sale_ts) = YEAR(d.date) 
+  AND MONTH(f.sale_ts) = MONTH(d.date)
+  JOIN latest_year ly ON YEAR(d.date) = ly.year
   GROUP BY p.category
 )
 SELECT
